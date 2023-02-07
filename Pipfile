@@ -1,0 +1,46 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[dev-packages]
+flake8 = "*"
+isort = "*"
+mypy = "*"
+coverage = "*"
+locust = "*"
+rope = "*"
+Faker = "*"
+autoflake = "*"
+responses = "~=0.21"
+pytest-asyncio = "*"
+pytest = "*"
+pytest-cov = "*"
+pytest-env = "*"
+black = "*"
+types-requests = "*"
+debugpy = "*"
+bandit = "*"
+pytest-dotenv = "==0.5.2"
+
+[packages]
+alembic = "*"
+fastapi = "*"
+gunicorn = "*"
+python-multipart = "*"
+requests = "*"
+sqlalchemy2-stubs = "*"
+sqlalchemy = "==1.4.27"
+asyncpg = "*"
+greenlet = "*"
+uvicorn = "*"
+fastapi_utils = "==0.2.1"
+httpx = "*"
+types-python-dateutil = "*"
+types-redis = "*"
+uvloop = "*"
+
+
+[requires]
+python_version = "3.10"
