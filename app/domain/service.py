@@ -22,7 +22,7 @@ from app.utils import time_util
 logger = logging.getLogger(__name__)
 
 
-class Protocols:
+class Schemas:
     class PtIn(Protocol):
         point_provider_name: str
         point_provider_code: str
@@ -33,11 +33,9 @@ class Protocols:
         sku_id: str | None
         conversion_ratio: Decimal = Decimal("1")
 
-
-class Schemas:
     class PaymentOutstandings(BaseModel):
         pg_amount: Decimal
-        point_units: list[Protocols.PtIn] = []
+        point_units: list[Schemas.PtIn] = []
 
         class Config:
             json_encoders = {Decimal: lambda v: int(v)}
@@ -305,7 +303,7 @@ class ServiceOrder(Order):
             (sku.quantity * sku.sell_price) for sku in self.skus if sku not in sku.not_countable_statuses
         )
 
-    def set_payment_outstandings(self, points: list[Protocols.PtIn]):
+    def set_payment_outstandings(self, points: list[Schemas.PtIn]):
         return self.payment.set_payment_outstandings(points=points)
 
     def precalculate_on_checkout(*args, **kwargs):  # type: ignore
@@ -582,7 +580,7 @@ class ServicePayment(Payment):
             return Schemas.PaymentOutstandings.parse_raw(self.outstandings)
         return None
 
-    def set_payment_outstandings(self, points: list[Protocols.PtIn]):
+    def set_payment_outstandings(self, points: list[Schemas.PtIn]):
         pv_amount = self.transaction.curr_transaction_pv_amount
         point_amount = sum(pt.requested_point_amount for pt in points) or Decimal("0")
         pg_amount = pv_amount - point_amount
