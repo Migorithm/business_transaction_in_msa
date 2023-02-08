@@ -214,7 +214,6 @@ class Order(Base):
     id: str
     create_dt: datetime = field(init=False, repr=False)
     update_dt: datetime = field(init=False, repr=False)
-    channel_id: str = field(init=False)
     user_id: str = field(init=False)
     sender_name: str = field(init=False)
     sender_phone: str = field(init=False)
@@ -279,12 +278,6 @@ class Order(Base):
     def calculate_fees(self) -> None:
         ...
 
-    @staticmethod
-    @abstractmethod
-    def precalculate_on_checkout(*args, **kwargs):  # type: ignore
-        ...
-
-    @staticmethod
     @abstractmethod
     def dict(*args, **kwargs) -> dict:  # type: ignore
         ...
@@ -292,7 +285,6 @@ class Order(Base):
 
 class Sku(Base):
     channel_name: str
-    channel_id: str
     sellable_sku_id: str
     quantity: int
     product_title: str

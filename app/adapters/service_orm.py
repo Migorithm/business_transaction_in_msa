@@ -225,7 +225,6 @@ service_payments = Table(
     "cvm_transaction_service_payments",
     mapper_registry.metadata,
     Column("id", String(length=36), primary_key=True),
-    Column("channel_id", String, index=True),
     Column("country", String),
     Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
     Column(
@@ -260,7 +259,6 @@ service_payment_refunds = Table(
     Column("service_payment_id", ForeignKey(service_payments.name + ".id", ondelete="cascade"), index=True),
     Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
     Column("service_transaction_id", String(32)),
-    Column("channel_id", String, index=True),
     Column("service_sku_id", String, nullable=True),
     Column("point_amount_for_refund", NUMERIC, CheckConstraint("point_amount_for_refund>=0"), server_default="0"),
     Column("pg_amount_for_refund", NUMERIC, CheckConstraint("pg_amount_for_refund>=0"), server_default="0"),
@@ -287,7 +285,6 @@ service_point_units = Table(
         server_default=func.now(),
     ),
     Column("confirm_date", postgresql.TIMESTAMP(timezone=True), nullable=True),
-    Column("channel_id", String),
     Column("country", String),
     Column("product_title", String),
     Column("priority", Integer, default=1),

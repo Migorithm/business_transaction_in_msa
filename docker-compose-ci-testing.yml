@@ -1,0 +1,11 @@
+version: '3.3'
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_USER=migolee
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=transaction_test

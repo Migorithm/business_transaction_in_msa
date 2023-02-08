@@ -40,6 +40,11 @@ jobs:
       - name: Test with mypy
         run: |
           pipenv run mypy --check-untyped-defs -p app
+
+      - name: Start containers
+        run: |
+          docker-compose -f docker-compose-ci-testing up -d
+          docker-compose ps
       - name: Test with pytest
         run: |
           pipenv run pytest
