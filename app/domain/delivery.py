@@ -121,7 +121,6 @@ class Schemas:
         user_id: str
         type: str
         product_title: str
-        channel_id: str
 
         init_point_amount: Decimal
         curr_point_amount: Decimal
@@ -2215,7 +2214,7 @@ class DeliveryPointUnit(PointUnit):
 @dataclass(eq=False)
 class DeliveryPaymentLog(PaymentLog):
     delivery_transaction_id: str = field(default="", repr=False)
-    delivery_transaction: DeliveryTransaction = field(init=False)
+    delivery_transaction: DeliveryTransaction = field(init=False, repr=False)
     xmin: int = field(init=False, repr=False)
 
     log: dict = field(default_factory=dict)

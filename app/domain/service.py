@@ -454,7 +454,6 @@ class ServiceSkuLog(SkuLog):
     def __post_init__(self):
         assert self.sku
         sku = self.sku
-        self.channel_id = sku.channel_id
         self.channel_name = sku.channel_name
         self.user_id = sku.user_id
         self.order_id = sku.order_id

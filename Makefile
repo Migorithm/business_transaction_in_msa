@@ -13,3 +13,6 @@ downgrade:
 
 checks:
 	$(EXPORT) && pipenv run sh scripts/checks.sh
+
+docker-init:
+	$(EXPORT) && pipenv run sh scripts/docker-init.sh

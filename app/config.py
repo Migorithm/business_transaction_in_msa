@@ -1,6 +1,11 @@
 import os
+import typing
 
 from pydantic import BaseSettings
+
+STAGE = typing.cast(
+    typing.Literal["local", "ci-testing", "testing", "develop", "staging", "production"], os.getenv("STAGE")
+)
 
 
 class DeliverySettings(BaseSettings):

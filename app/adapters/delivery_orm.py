@@ -441,7 +441,6 @@ delivery_point_units = Table(
         server_default=func.now(),
     ),
     Column("confirm_date", postgresql.TIMESTAMP(timezone=True), nullable=True),
-    Column("channel_id", String),
     Column("country", String),
     Column("product_title", String),
     Column("priority", Integer, default=1),
