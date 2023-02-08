@@ -50,5 +50,5 @@ jobs:
           pipenv run pytest
 
       - name: Stop containers
-          if: always()
+          if: ${{ always() }}
           run: docker-compose -f "compose.yml" down
