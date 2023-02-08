@@ -43,8 +43,12 @@ jobs:
 
       - name: Start containers
         run: |
-          docker-compose -f "docker-compose-ci-testing.yml" up -d --build
+          docker-compose -f "compose.yml" up -d --build
           docker-compose ps
       - name: Test with pytest
         run: |
           pipenv run pytest
+
+      - name: Stop containers
+          if: always()
+          run: docker-compose -f "compose.yml" down
