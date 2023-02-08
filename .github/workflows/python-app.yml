@@ -43,7 +43,7 @@ jobs:
 
       - name: Start containers
         run: |
-          docker-compose -f docker-compose-ci-testing up -d
+          docker-compose -f docker-compose-ci-testing.yml up -d
           docker-compose ps
       - name: Test with pytest
         run: |
