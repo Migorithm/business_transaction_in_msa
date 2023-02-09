@@ -205,7 +205,36 @@ def generate_ddl(
     drop_view_ddl = DDL(drop_format(object_type.upper(), name)).execute_if(dialect="postgresql")
     return create_view_ddl, drop_view_ddl
 ```
+### Event Store Being A RDBMS
+Ideal event store should meet the following requirement:
+- 'full-sequential-read' of the events in our event store.
+- Reading all events for a given entity(aggregate)
+- Before we accept a change to an entity, we need to persist that change, meaning the addition of event to event store.
+- A desired change may not be only a single event but multiple. So we need an event store that can process multiple events emission.
+- Event sourcing-based applications produce a lot of data. Therefore the event store must be scalable in terms of data
 
+Leaving the requirements aside, event sourcing is to keep track of what an aggregate reaches at a certain point.<br>
+It is particularly the case for monetary transactions. So complexity in that case is justified anyway.<br>
+The problem is, when a company like startup literally starts their business, the traffic is uncertain.<br>
+So implementing such a demanding job with multiple different storage can be overwhelming.<br>
+For those reasons, I decided to use Postgres as event store. 
+
+```python
+#/app/adapters/eventstore
+event_store = Table(
+    "cvm_transaction_event_store",
+    mapper_registry.metadata,
+    Column("global_seq", Integer, global_seq, server_default=global_seq.next_value(), primary_key=True),
+    Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
+    Column("aggregate_id", String, nullable=False),
+    Column("aggregate_version", Integer, nullable=False, unique=True),
+    Column("aggregate_type", String, nullable=False),
+    Column("payload", postgresql.JSONB, nullable=False),
+)
+
+idx_on_event_store = Index("idx_on_event_store", event_store.c.aggregate_id, event_store.c.aggregate_version)
+```
+Note that multicolumn index were implemented for better search.
 
 ## Test 
 ### Conftest

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.adapters import delivery_orm, service_orm
+from app.adapters import eventstore  # ,delivery_orm, service_orm
 from app.config import PERSISTENT_DB, STAGE
 
 engine: AsyncEngine | None = None
@@ -18,5 +18,6 @@ if STAGE not in ("testing", "ci-testing"):
     )
     autocommit_engine = engine.execution_options(isolation_level="AUTOCOMMIT")
     async_autocommit_session_factory = sessionmaker(autocommit_engine, expire_on_commit=False, class_=AsyncSession)
-    delivery_orm.start_mappers()
-    service_orm.start_mappers()
+    eventstore.start_mappers()
+    # delivery_orm.start_mappers()
+    # service_orm.start_mappers()

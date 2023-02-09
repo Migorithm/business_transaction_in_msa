@@ -1,4 +1,4 @@
-import inspect
+# import inspect
 
 from sqlalchemy import (
     ARRAY,
@@ -16,10 +16,11 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import registry, relationship
 
-from app.domain import base, delivery
+# from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import registry  # , relationship
+
+# from app.domain import base, delivery
 
 metadata = MetaData()
 mapper_registry = registry(metadata=metadata)
@@ -110,25 +111,6 @@ delivery_orders = Table(
     ),
     Column("paid_date", postgresql.TIMESTAMP(timezone=True), nullable=True),
     Column("xmin", Integer, system=True, server_default=FetchedValue()),  # system column
-)
-
-
-delivery_payment_logs = Table(
-    "cvm_transaction_delivery_payment_log",
-    mapper_registry.metadata,
-    Column("id", String(length=36), primary_key=True),
-    Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
-    Column(
-        "update_dt",
-        postgresql.TIMESTAMP(timezone=True),
-        default=func.now(),
-        onupdate=func.current_timestamp(),
-        server_default=func.now(),
-    ),
-    Column("delivery_transaction_id", String),
-    Column("log", postgresql.JSONB),
-    Column("log_type", String),
-    Column("xmin", Integer, system=True, server_default=FetchedValue()),
 )
 
 
@@ -479,259 +461,234 @@ delivery_trackings = Table(
 )
 
 
-def extract_models(module):
-    for _, class_ in inspect.getmembers(module, lambda o: isinstance(o, type)):
-        if issubclass(class_, base.Base) and class_ != base.Base:
-            yield class_
-        if issubclass(class_, base.PointBase) and class_ != base.PointBase:
-            yield class_
+# def extract_models(module):
+#     for _, class_ in inspect.getmembers(module, lambda o: isinstance(o, type)):
+#         if issubclass(class_, base.Base) and class_ != base.Base:
+#             yield class_
+#         if issubclass(class_, base.PointBase) and class_ != base.PointBase:
+#             yield class_
 
 
-def _get_set_hybrid_properties(models):
-    for model in models:
-        for method_name, _ in inspect.getmembers(model, lambda o: isinstance(o, property)):
-            attr = getattr(model, method_name)
-            get_ = hybrid_property(attr.fget)
-            set_ = get_.setter(attr.fset) if attr.fset else None
-            setattr(model, method_name, get_)
-            if set_:
-                setattr(model, method_name, set_)
+# def _get_set_hybrid_properties(models):
+#     for model in models:
+#         for method_name, _ in inspect.getmembers(model, lambda o: isinstance(o, property)):
+#             attr = getattr(model, method_name)
+#             get_ = hybrid_property(attr.fget)
+#             set_ = get_.setter(attr.fset) if attr.fset else None
+#             setattr(model, method_name, get_)
+#             if set_:
+#                 setattr(model, method_name, set_)
 
 
-def start_mappers():
-    _get_set_hybrid_properties(extract_models(delivery))
+# def start_mappers():
+#     _get_set_hybrid_properties(extract_models(delivery))
 
-    mapper_registry.map_imperatively(
-        delivery.DeliveryTracking,
-        delivery_trackings,
-        properties={
-            "delivery_skus": relationship(
-                delivery.DeliverySku,
-                back_populates="delivery_tracking",
-                primaryjoin="foreign(delivery.DeliverySku.delivery_tracking_id) == delivery.DeliveryTracking.id",
-                collection_class=set,
-            )
-        },
-        eager_defaults=True,
-        version_id_col=delivery_trackings.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryTracking,
+#         delivery_trackings,
+#         properties={
+#             "delivery_skus": relationship(
+#                 delivery.DeliverySku,
+#                 back_populates="delivery_tracking",
+#                 primaryjoin="foreign(delivery.DeliverySku.delivery_tracking_id) == delivery.DeliveryTracking.id",
+#                 collection_class=set,
+#             )
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_trackings.c.xmin,
+#         version_id_generator=False,
+#     )
 
-    mapper_registry.map_imperatively(
-        delivery.DeliveryPaymentLog,
-        delivery_payment_logs,
-        # New
-        properties={
-            "delivery_transaction": relationship(
-                delivery.DeliveryTransaction,
-                back_populates="delivery_payment_logs",
-                primaryjoin="foreign(delivery.DeliveryPaymentLog.delivery_transaction_id)"
-                " == delivery.DeliveryTransaction.id",
-                uselist=False,
-                innerjoin=True,
-                # primaryjoin=f"{payment_logs.name}.c.delivery_order_id == {delivery_orders.name}.c.id"
-            )
-        },
-        eager_defaults=True,
-        version_id_col=delivery_payment_logs.c.xmin,
-        version_id_generator=False,
-    )
 
-    mapper_registry.map_imperatively(
-        delivery.DeliverySkuLog,
-        delivery_sku_logs,
-        properties={
-            "delivery_sku": relationship(
-                delivery.DeliverySku,
-                back_populates="delivery_sku_logs",
-                innerjoin=True,
-                uselist=False,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_sku_logs.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryPointUnit,
-        delivery_point_units,
-        properties={
-            "delivery_payment": relationship(delivery.DeliveryPayment, back_populates="delivery_point_units"),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_point_units.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliverySkuLog,
+#         delivery_sku_logs,
+#         properties={
+#             "delivery_sku": relationship(
+#                 delivery.DeliverySku,
+#                 back_populates="delivery_sku_logs",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_sku_logs.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryPointUnit,
+#         delivery_point_units,
+#         properties={
+#             "delivery_payment": relationship(delivery.DeliveryPayment, back_populates="delivery_point_units"),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_point_units.c.xmin,
+#         version_id_generator=False,
+#     )
 
-    mapper_registry.map_imperatively(
-        delivery.DeliverySku,
-        delivery_skus,
-        properties={
-            "delivery_order": relationship(
-                delivery.DeliveryOrder,
-                back_populates="delivery_skus",
-                innerjoin=True,
-                uselist=False,
-            ),
-            "delivery_product": relationship(
-                delivery.DeliveryProduct,
-                back_populates="delivery_skus",
-                innerjoin=True,
-                uselist=False,
-            ),
-            "delivery_sku_logs": relationship(
-                delivery.DeliverySkuLog,
-                back_populates="delivery_sku",
-                cascade="all, delete-orphan",
-                collection_class=list,
-            ),
-            "delivery_tracking": relationship(
-                delivery.DeliveryTracking,
-                back_populates="delivery_skus",
-                primaryjoin="foreign(delivery.DeliverySku.delivery_tracking_id) == delivery.DeliveryTracking.id",
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_skus.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryProduct,
-        delivery_products,
-        properties={
-            "delivery_skus": relationship(
-                delivery.DeliverySku,
-                back_populates="delivery_product",
-                cascade="all, delete-orphan",
-                collection_class=set,
-            ),
-            "delivery_order": relationship(
-                delivery.DeliveryOrder,
-                # secondary?
-                secondary=delivery_skus,
-                primaryjoin=f"{delivery_products.name}.c.id== {delivery_skus.name}.c.delivery_product_id",
-                secondaryjoin=f"{delivery_skus.name}.c.delivery_order_id == {delivery_orders.name}.c.id",
-                back_populates="delivery_products",
-                uselist=False,
-                viewonly=True,
-                innerjoin=True,
-            ),
-            "delivery_group": relationship(
-                delivery.DeliveryGroup,
-                back_populates="delivery_products",
-                innerjoin=True,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_products.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryGroup,
-        delivery_groups,
-        properties={
-            "delivery_products": relationship(
-                delivery.DeliveryProduct,
-                back_populates="delivery_group",
-                cascade="all, delete-orphan",
-                innerjoin=True,
-                collection_class=set,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_groups.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryOrder,
-        delivery_orders,
-        properties={
-            "delivery_products": relationship(
-                delivery.DeliveryProduct,
-                # secondary?
-                secondary=delivery_skus,
-                primaryjoin=f"{delivery_orders.name}.c.id == {delivery_skus.name}.c.delivery_order_id",
-                secondaryjoin=f"{delivery_skus.name}.c.delivery_product_id == {delivery_products.name}.c.id",
-                back_populates="delivery_order",
-                innerjoin=True,
-                viewonly=True,
-                collection_class=set,
-            ),
-            "delivery_skus": relationship(
-                delivery.DeliverySku,
-                back_populates="delivery_order",
-                collection_class=set,
-                innerjoin=True,
-            ),
-            "delivery_transaction": relationship(
-                delivery.DeliveryTransaction,
-                back_populates="delivery_orders",
-                innerjoin=True,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_orders.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryTransaction,
-        delivery_transactions,
-        properties={
-            "delivery_orders": relationship(
-                delivery.DeliveryOrder, back_populates="delivery_transaction", collection_class=set
-            ),
-            "delivery_payment": relationship(
-                delivery.DeliveryPayment, back_populates="delivery_transaction", uselist=False, innerjoin=True
-            ),
-            "delivery_payment_logs": relationship(
-                delivery.DeliveryPaymentLog,
-                back_populates="delivery_transaction",
-                primaryjoin="foreign(delivery.DeliveryPaymentLog.delivery_transaction_id)"
-                " == delivery.DeliveryTransaction.id",
-                collection_class=set,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_transactions.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        delivery.DeliveryPaymentRefund,
-        delivery_payment_refunds,
-        properties={
-            "delivery_payment": relationship(
-                delivery.DeliveryPayment,
-                back_populates="delivery_payment_refunds",
-            )
-        },
-        eager_defaults=True,
-        version_id_col=delivery_payment_refunds.c.xmin,
-        version_id_generator=False,
-    ),
-    mapper_registry.map_imperatively(
-        delivery.DeliveryPayment,
-        delivery_payments,
-        properties={
-            "delivery_point_units": relationship(
-                delivery.DeliveryPointUnit,
-                back_populates="delivery_payment",
-                uselist=True,
-                collection_class=set,
-            ),
-            "delivery_transaction": relationship(
-                delivery.DeliveryTransaction,
-                back_populates="delivery_payment",
-                innerjoin=True,
-                uselist=False,
-            ),
-            "delivery_payment_refunds": relationship(
-                delivery.DeliveryPaymentRefund,
-                back_populates="delivery_payment",
-                collection_class=list,
-                order_by=delivery_payment_refunds.c.create_dt,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=delivery_payments.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliverySku,
+#         delivery_skus,
+#         properties={
+#             "delivery_order": relationship(
+#                 delivery.DeliveryOrder,
+#                 back_populates="delivery_skus",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#             "delivery_product": relationship(
+#                 delivery.DeliveryProduct,
+#                 back_populates="delivery_skus",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#             "delivery_sku_logs": relationship(
+#                 delivery.DeliverySkuLog,
+#                 back_populates="delivery_sku",
+#                 cascade="all, delete-orphan",
+#                 collection_class=list,
+#             ),
+#             "delivery_tracking": relationship(
+#                 delivery.DeliveryTracking,
+#                 back_populates="delivery_skus",
+#                 primaryjoin="foreign(delivery.DeliverySku.delivery_tracking_id) == delivery.DeliveryTracking.id",
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_skus.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryProduct,
+#         delivery_products,
+#         properties={
+#             "delivery_skus": relationship(
+#                 delivery.DeliverySku,
+#                 back_populates="delivery_product",
+#                 cascade="all, delete-orphan",
+#                 collection_class=set,
+#             ),
+#             "delivery_order": relationship(
+#                 delivery.DeliveryOrder,
+#                 # secondary?
+#                 secondary=delivery_skus,
+#                 primaryjoin=f"{delivery_products.name}.c.id== {delivery_skus.name}.c.delivery_product_id",
+#                 secondaryjoin=f"{delivery_skus.name}.c.delivery_order_id == {delivery_orders.name}.c.id",
+#                 back_populates="delivery_products",
+#                 uselist=False,
+#                 viewonly=True,
+#                 innerjoin=True,
+#             ),
+#             "delivery_group": relationship(
+#                 delivery.DeliveryGroup,
+#                 back_populates="delivery_products",
+#                 innerjoin=True,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_products.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryGroup,
+#         delivery_groups,
+#         properties={
+#             "delivery_products": relationship(
+#                 delivery.DeliveryProduct,
+#                 back_populates="delivery_group",
+#                 cascade="all, delete-orphan",
+#                 innerjoin=True,
+#                 collection_class=set,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_groups.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryOrder,
+#         delivery_orders,
+#         properties={
+#             "delivery_products": relationship(
+#                 delivery.DeliveryProduct,
+#                 # secondary?
+#                 secondary=delivery_skus,
+#                 primaryjoin=f"{delivery_orders.name}.c.id == {delivery_skus.name}.c.delivery_order_id",
+#                 secondaryjoin=f"{delivery_skus.name}.c.delivery_product_id == {delivery_products.name}.c.id",
+#                 back_populates="delivery_order",
+#                 innerjoin=True,
+#                 viewonly=True,
+#                 collection_class=set,
+#             ),
+#             "delivery_skus": relationship(
+#                 delivery.DeliverySku,
+#                 back_populates="delivery_order",
+#                 collection_class=set,
+#                 innerjoin=True,
+#             ),
+#             "delivery_transaction": relationship(
+#                 delivery.DeliveryTransaction,
+#                 back_populates="delivery_orders",
+#                 innerjoin=True,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_orders.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryTransaction,
+#         delivery_transactions,
+#         properties={
+#             "delivery_orders": relationship(
+#                 delivery.DeliveryOrder, back_populates="delivery_transaction", collection_class=set
+#             ),
+#             "delivery_payment": relationship(
+#                 delivery.DeliveryPayment, back_populates="delivery_transaction", uselist=False, innerjoin=True
+#             ),
+
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_transactions.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryPaymentRefund,
+#         delivery_payment_refunds,
+#         properties={
+#             "delivery_payment": relationship(
+#                 delivery.DeliveryPayment,
+#                 back_populates="delivery_payment_refunds",
+#             )
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_payment_refunds.c.xmin,
+#         version_id_generator=False,
+#     ),
+#     mapper_registry.map_imperatively(
+#         delivery.DeliveryPayment,
+#         delivery_payments,
+#         properties={
+#             "delivery_point_units": relationship(
+#                 delivery.DeliveryPointUnit,
+#                 back_populates="delivery_payment",
+#                 uselist=True,
+#                 collection_class=set,
+#             ),
+#             "delivery_transaction": relationship(
+#                 delivery.DeliveryTransaction,
+#                 back_populates="delivery_payment",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#             "delivery_payment_refunds": relationship(
+#                 delivery.DeliveryPaymentRefund,
+#                 back_populates="delivery_payment",
+#                 collection_class=list,
+#                 order_by=delivery_payment_refunds.c.create_dt,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=delivery_payments.c.xmin,
+#         version_id_generator=False,
+#     )
