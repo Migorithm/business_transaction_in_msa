@@ -8,10 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engin
 from sqlalchemy.orm import clear_mappers, sessionmaker
 
 from app.adapters.delivery_orm import metadata as delivery_metadata
-from app.adapters.delivery_orm import start_mappers as delivery_start_mappers
+
+# from app.adapters.delivery_orm import start_mappers as delivery_start_mappers
 from app.adapters.event_listeners import registered_ddls
+from app.adapters.eventstore import metadata as es_metadata
+from app.adapters.eventstore import start_mappers as es_start_mappers
 from app.adapters.service_orm import metadata as service_metadata
-from app.adapters.service_orm import start_mappers as service_start_mappers
+
+# from app.adapters.service_orm import start_mappers as service_start_mappers
 from app.config import PERSISTENT_DB
 
 create_drop_procedure = """
@@ -81,7 +85,7 @@ async def aio_pg_engine():
     )
     async with engine.begin() as conn:
         drop_stmt = f"DROP TABLE IF EXISTS {','.join(delivery_metadata.tables.keys())},\
-            {','.join(service_metadata.tables.keys())} CASCADE;"
+            {','.join(service_metadata.tables.keys())},{','.join(es_metadata.tables.keys())} CASCADE;"
         await conn.execute(text(drop_stmt))
 
         await conn.execute(text(create_drop_procedure))
@@ -100,9 +104,11 @@ async def aio_pg_engine():
 
         await conn.run_sync(delivery_metadata.create_all)
         await conn.run_sync(service_metadata.create_all)
+        await conn.run_sync(es_metadata.create_all)
 
-    delivery_start_mappers()
-    service_start_mappers()
+    # delivery_start_mappers()
+    # service_start_mappers()
+    es_start_mappers()
 
     yield engine
 

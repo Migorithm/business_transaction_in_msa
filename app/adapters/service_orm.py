@@ -1,4 +1,4 @@
-import inspect
+# import inspect
 
 from sqlalchemy import (
     ARRAY,
@@ -16,10 +16,11 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import registry, relationship
 
-from app.domain import base, service
+# from sqlalchemy.ext.hybrid import hybrid_property
+from sqlalchemy.orm import registry  # , relationship
+
+# from app.domain import base, service
 
 NUMERIC = Numeric(19, 4)
 metadata = MetaData()
@@ -95,25 +96,6 @@ service_orders = Table(
 )
 
 
-service_payment_logs = Table(
-    "cvm_transaction_service_payment_log",
-    mapper_registry.metadata,
-    Column("id", String(length=36), primary_key=True),
-    Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
-    Column(
-        "update_dt",
-        postgresql.TIMESTAMP(timezone=True),
-        default=func.now(),
-        onupdate=func.current_timestamp(),
-        server_default=func.now(),
-    ),
-    Column("service_transaction_id", String),
-    Column("log", postgresql.JSONB),
-    Column("log_type", String),
-    Column("xmin", Integer, system=True, server_default=FetchedValue()),
-)
-
-
 service_skus = Table(
     "cvm_transaction_service_sku",
     mapper_registry.metadata,
@@ -160,12 +142,10 @@ service_skus = Table(
     Column("master_sku_id", String(length=50), nullable=False),
     Column("title", String(length=250), server_default="", nullable=False),
     Column("image", Text, server_default="", nullable=False),
-    Column("status", String(length=50), default=service.ServiceSku.Status.TO_BE_ISSUED, nullable=False),
+    Column("status", String(length=50), nullable=False),
     Column(
         "request_status",
         String(length=50),
-        default=service.ServiceSku.Status.TO_BE_ISSUED.value,
-        server_default=service.ServiceSku.Status.TO_BE_ISSUED.value,
         nullable=False,
     ),
     Column("sell_price", NUMERIC, CheckConstraint("sell_price>=0"), nullable=False, server_default="0"),
@@ -196,9 +176,7 @@ service_sku_logs = Table(
     Column("service_transaction_id", String, index=True),
     Column("service_order_id", String),
     Column("service_sku_id", ForeignKey(service_skus.name + ".id", ondelete="cascade"), index=True),
-    Column(
-        "status", String(length=50), default=service.ServiceSku.Status.TO_BE_ISSUED.value, nullable=False, index=True
-    ),
+    Column("status", String(length=50), nullable=False, index=True),
     #
     Column("create_dt", postgresql.TIMESTAMP(timezone=True), default=func.now(), server_default=func.now()),
     Column(
@@ -301,174 +279,150 @@ service_point_units = Table(
 )
 
 
-def extract_models(module):
-    for _, class_ in inspect.getmembers(module, lambda o: isinstance(o, type)):
-        if issubclass(class_, base.Base) and class_ != base.Base:
-            yield class_
-        if issubclass(class_, base.PointBase) and class_ != base.PointBase:
-            yield class_
+# def extract_models(module):
+#     for _, class_ in inspect.getmembers(module, lambda o: isinstance(o, type)):
+#         if issubclass(class_, base.Base) and class_ != base.Base:
+#             yield class_
+#         if issubclass(class_, base.PointBase) and class_ != base.PointBase:
+#             yield class_
 
 
-def _get_set_hybrid_properties(models):
-    for model in models:
-        for method_name, _ in inspect.getmembers(model, lambda o: isinstance(o, property)):
-            attr = getattr(model, method_name)
-            get_ = hybrid_property(attr.fget)
-            set_ = get_.setter(attr.fset) if attr.fset else None
-            setattr(model, method_name, get_)
-            if set_:
-                setattr(model, method_name, set_)
+# def _get_set_hybrid_properties(models):
+#     for model in models:
+#         for method_name, _ in inspect.getmembers(model, lambda o: isinstance(o, property)):
+#             attr = getattr(model, method_name)
+#             get_ = hybrid_property(attr.fget)
+#             set_ = get_.setter(attr.fset) if attr.fset else None
+#             setattr(model, method_name, get_)
+#             if set_:
+#                 setattr(model, method_name, set_)
 
 
-def start_mappers():
-    _get_set_hybrid_properties(extract_models(service))
+# def start_mappers():
+#     _get_set_hybrid_properties(extract_models(service))
 
-    mapper_registry.map_imperatively(
-        service.ServiceSkuLog,
-        service_sku_logs,
-        properties={
-            "service_sku": relationship(
-                service.ServiceSku,
-                back_populates="service_sku_logs",
-                innerjoin=True,
-                uselist=False,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=service_sku_logs.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         service.ServiceSkuLog,
+#         service_sku_logs,
+#         properties={
+#             "service_sku": relationship(
+#                 service.ServiceSku,
+#                 back_populates="service_sku_logs",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_sku_logs.c.xmin,
+#         version_id_generator=False,
+#     )
 
-    mapper_registry.map_imperatively(
-        service.ServicePointUnit,
-        service_point_units,
-        properties={
-            "service_payment": relationship(service.ServicePayment, back_populates="service_point_units"),
-        },
-        eager_defaults=True,
-        version_id_col=service_point_units.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         service.ServicePointUnit,
+#         service_point_units,
+#         properties={
+#             "service_payment": relationship(service.ServicePayment, back_populates="service_point_units"),
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_point_units.c.xmin,
+#         version_id_generator=False,
+#     )
 
-    mapper_registry.map_imperatively(
-        service.ServiceSku,
-        service_skus,
-        properties={
-            "service_order": relationship(
-                service.ServiceOrder,
-                back_populates="service_skus",
-                innerjoin=True,
-                uselist=False,
-            ),
-            "service_sku_logs": relationship(
-                service.ServiceSkuLog,
-                back_populates="service_sku",
-                cascade="all, delete-orphan",
-                collection_class=list,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=service_skus.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        service.ServiceOrder,
-        service_orders,
-        properties={
-            "service_skus": relationship(
-                service.ServiceSku,
-                back_populates="service_order",
-                collection_class=set,
-                innerjoin=True,
-            ),
-            "service_transaction": relationship(
-                service.ServiceTransaction,
-                back_populates="service_orders",
-                innerjoin=True,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=service_orders.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        service.ServicePaymentLog,
-        service_payment_logs,
-        # New
-        properties={
-            "service_transaction": relationship(
-                service.ServiceTransaction,
-                back_populates="service_payment_logs",
-                primaryjoin="foreign(service.ServicePaymentLog.service_transaction_id)"
-                " == service.ServiceTransaction.id",
-                uselist=False,
-                innerjoin=True,
-                # primaryjoin=f"{payment_logs.name}.c.service_order_id == {service_orders.name}.c.id"
-            )
-        },
-        eager_defaults=True,
-        version_id_col=service_payment_logs.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        service.ServiceTransaction,
-        service_transactions,
-        properties={
-            "service_orders": relationship(
-                service.ServiceOrder, back_populates="service_transaction", collection_class=set
-            ),
-            "service_payment": relationship(
-                service.ServicePayment, back_populates="service_transaction", uselist=False, innerjoin=True
-            ),
-            "service_payment_logs": relationship(
-                service.ServicePaymentLog,
-                back_populates="service_transaction",
-                primaryjoin="foreign(service.ServicePaymentLog.service_transaction_id)"
-                " == service.ServiceTransaction.id",
-                collection_class=set,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=service_transactions.c.xmin,
-        version_id_generator=False,
-    )
-    mapper_registry.map_imperatively(
-        service.ServicePaymentRefund,
-        service_payment_refunds,
-        properties={
-            "service_payment": relationship(
-                service.ServicePayment,
-                back_populates="service_payment_refunds",
-            )
-        },
-        eager_defaults=True,
-        version_id_col=service_payment_refunds.c.xmin,
-        version_id_generator=False,
-    ),
-    mapper_registry.map_imperatively(
-        service.ServicePayment,
-        service_payments,
-        properties={
-            "service_point_units": relationship(
-                service.ServicePointUnit,
-                back_populates="service_payment",
-                uselist=True,
-                collection_class=set,
-            ),
-            "service_transaction": relationship(
-                service.ServiceTransaction,
-                back_populates="service_payment",
-                innerjoin=True,
-                uselist=False,
-            ),
-            "service_payment_refunds": relationship(
-                service.ServicePaymentRefund,
-                back_populates="service_payment",
-                collection_class=list,
-                order_by=service_payment_refunds.c.create_dt,
-            ),
-        },
-        eager_defaults=True,
-        version_id_col=service_payments.c.xmin,
-        version_id_generator=False,
-    )
+#     mapper_registry.map_imperatively(
+#         service.ServiceSku,
+#         service_skus,
+#         properties={
+#             "service_order": relationship(
+#                 service.ServiceOrder,
+#                 back_populates="service_skus",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#             "service_sku_logs": relationship(
+#                 service.ServiceSkuLog,
+#                 back_populates="service_sku",
+#                 cascade="all, delete-orphan",
+#                 collection_class=list,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_skus.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         service.ServiceOrder,
+#         service_orders,
+#         properties={
+#             "service_skus": relationship(
+#                 service.ServiceSku,
+#                 back_populates="service_order",
+#                 collection_class=set,
+#                 innerjoin=True,
+#             ),
+#             "service_transaction": relationship(
+#                 service.ServiceTransaction,
+#                 back_populates="service_orders",
+#                 innerjoin=True,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_orders.c.xmin,
+#         version_id_generator=False,
+#     )
+
+#     mapper_registry.map_imperatively(
+#         service.ServiceTransaction,
+#         service_transactions,
+#         properties={
+#             "service_orders": relationship(
+#                 service.ServiceOrder, back_populates="service_transaction", collection_class=set
+#             ),
+#             "service_payment": relationship(
+#                 service.ServicePayment, back_populates="service_transaction", uselist=False, innerjoin=True
+#             ),
+
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_transactions.c.xmin,
+#         version_id_generator=False,
+#     )
+#     mapper_registry.map_imperatively(
+#         service.ServicePaymentRefund,
+#         service_payment_refunds,
+#         properties={
+#             "service_payment": relationship(
+#                 service.ServicePayment,
+#                 back_populates="service_payment_refunds",
+#             )
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_payment_refunds.c.xmin,
+#         version_id_generator=False,
+#     ),
+#     mapper_registry.map_imperatively(
+#         service.ServicePayment,
+#         service_payments,
+#         properties={
+#             "service_point_units": relationship(
+#                 service.ServicePointUnit,
+#                 back_populates="service_payment",
+#                 uselist=True,
+#                 collection_class=set,
+#             ),
+#             "service_transaction": relationship(
+#                 service.ServiceTransaction,
+#                 back_populates="service_payment",
+#                 innerjoin=True,
+#                 uselist=False,
+#             ),
+#             "service_payment_refunds": relationship(
+#                 service.ServicePaymentRefund,
+#                 back_populates="service_payment",
+#                 collection_class=list,
+#                 order_by=service_payment_refunds.c.create_dt,
+#             ),
+#         },
+#         eager_defaults=True,
+#         version_id_col=service_payments.c.xmin,
+#         version_id_generator=False,
+#     )
